@@ -47,15 +47,16 @@ class AppTheme {
         seedColor: primaryColor,
         brightness: Brightness.dark,
         primary: primaryColor,
-        secondary: accentColor,
+        secondary: goldColor,
         surface: surfaceDark,
         background: backgroundDark,
         error: errorColor,
       ),
       scaffoldBackgroundColor: backgroundDark,
+      cardColor: surfaceDark,
       cardTheme: CardThemeData(
         elevation: 0,
-        color: cardDark,
+        color: surfaceDark,
         shape: RoundedRectangleBorder(
           borderRadius: mediumBorderRadius,
           side: const BorderSide(color: Colors.white10),
@@ -72,13 +73,15 @@ class AppTheme {
         ),
       ),
       textTheme: _baseTextTheme.copyWith(
-        displayLarge: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: textDark),
-        displayMedium: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: textDark),
+        displayLarge: GoogleFonts.outfit(fontWeight: FontWeight.w900, color: textDark),
+        displayMedium: GoogleFonts.outfit(fontWeight: FontWeight.w900, color: textDark),
         displaySmall: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: textDark),
-        headlineLarge: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: textDark),
-        headlineMedium: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: textDark),
-        titleLarge: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: textDark),
-      ).merge(_bodyTextTheme.apply(bodyColor: textDark, displayColor: textDark)),
+        headlineLarge: GoogleFonts.outfit(fontWeight: FontWeight.w900, color: textDark),
+        headlineMedium: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: textDark),
+        titleLarge: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: textDark),
+        bodyLarge: GoogleFonts.outfit(color: textDark),
+        bodyMedium: GoogleFonts.outfit(color: textDark.withAlpha(200)),
+      ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -91,56 +94,7 @@ class AppTheme {
     );
   }
 
-  static ThemeData get lightTheme {
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.light,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: primaryColor,
-        brightness: Brightness.light,
-        primary: primaryColor,
-        secondary: accentColor,
-        surface: surfaceLight,
-        background: backgroundLight,
-        error: errorColor,
-      ),
-      scaffoldBackgroundColor: backgroundLight,
-      cardTheme: CardThemeData(
-        elevation: 0,
-        color: surfaceLight,
-        shape: RoundedRectangleBorder(
-          borderRadius: mediumBorderRadius,
-          side: BorderSide(color: Colors.grey.withAlpha(20)),
-        ),
-      ),
-      appBarTheme: AppBarTheme(
-        backgroundColor: backgroundLight,
-        elevation: 0,
-        centerTitle: false,
-        iconTheme: const IconThemeData(color: textLight),
-        titleTextStyle: GoogleFonts.outfit(
-          color: textLight,
-          fontSize: 24,
-          fontWeight: FontWeight.w900,
-        ),
-      ),
-      textTheme: _baseTextTheme.copyWith(
-        displayLarge: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: textLight),
-        displayMedium: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: textLight),
-        displaySmall: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: textLight),
-        headlineLarge: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: textLight),
-        headlineMedium: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: textLight),
-        titleLarge: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: textLight),
-      ).merge(_bodyTextTheme.apply(bodyColor: textLight, displayColor: textLight)),
-      filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          backgroundColor: primaryColor,
-          foregroundColor: Colors.white,
-          elevation: 0,
-        ),
-      ),
-    );
-  }
+  static ThemeData get lightTheme => darkTheme.copyWith(
+    brightness: Brightness.dark, // Even in light mode, we want the Elite Dark look
+  );
 }

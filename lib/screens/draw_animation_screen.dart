@@ -17,6 +17,9 @@ class DrawAnimationScreen extends StatefulWidget {
 class _DrawAnimationScreenState extends State<DrawAnimationScreen> with TickerProviderStateMixin {
   late AnimationController _pulseController;
   late AnimationController _gridRotateController;
+  late AnimationController _radarController;
+  late AnimationController _scanLineController;
+  
   final List<int> _gridNumbers = [];
   final List<int> _winnerIndices = [];
   final List<int> _foundWinnerIndices = [];
@@ -24,11 +27,11 @@ class _DrawAnimationScreenState extends State<DrawAnimationScreen> with TickerPr
   final math.Random _random = math.Random();
   
   final List<String> _suspenseTexts = [
-    "RECHERCHE DANS LA MATRICE...",
-    "SCAN DES POSSIBILITÉS...",
-    "ALIGNEMENT DES PROBABILITÉS...",
+    "INTERROGATION DE LA MATRICE...",
+    "FLUX DE DONNÉES EN COURS...",
+    "CALCUL DES PROBABILITÉS...",
     "EXTRACTION DES GAGNANTS...",
-    "DESTIN EN COURS...",
+    "DESTIN ÉLITE ACTIVÉ...",
   ];
   int _currentTextIndex = 0;
 
@@ -42,6 +45,16 @@ class _DrawAnimationScreenState extends State<DrawAnimationScreen> with TickerPr
 
     _gridRotateController = AnimationController(
       duration: const Duration(seconds: 20),
+      vsync: this,
+    )..repeat();
+
+    _radarController = AnimationController(
+      duration: const Duration(seconds: 4),
+      vsync: this,
+    )..repeat();
+
+    _scanLineController = AnimationController(
+      duration: const Duration(seconds: 2),
       vsync: this,
     )..repeat();
 
@@ -83,6 +96,8 @@ class _DrawAnimationScreenState extends State<DrawAnimationScreen> with TickerPr
   void dispose() {
     _pulseController.dispose();
     _gridRotateController.dispose();
+    _radarController.dispose();
+    _scanLineController.dispose();
     super.dispose();
   }
 
@@ -102,10 +117,10 @@ class _DrawAnimationScreenState extends State<DrawAnimationScreen> with TickerPr
       },
       builder: (context, state) {
         if (state.status == DrawStatus.completed || state.animatingNumbers == null || state.finalNumbers == null) {
-          // Show a brief loading only if not already completed (to avoid flicker)
           if (state.status == DrawStatus.completed) return const SizedBox.shrink();
           
           return const Scaffold(
+            backgroundColor: AppTheme.backgroundDark,
             body: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -113,7 +128,7 @@ class _DrawAnimationScreenState extends State<DrawAnimationScreen> with TickerPr
                   CircularProgressIndicator(color: AppTheme.goldColor),
                   SizedBox(height: 20),
                   Text(
-                    'FINALISATION...',
+                    'OPTIMISATION DES DONNÉES...',
                     style: TextStyle(color: Colors.white70, letterSpacing: 2),
                   ),
                 ],
@@ -144,6 +159,7 @@ class _DrawAnimationScreenState extends State<DrawAnimationScreen> with TickerPr
         }
 
         return Scaffold(
+          backgroundColor: AppTheme.backgroundDark,
           body: Container(
             decoration: const BoxDecoration(
               color: AppTheme.backgroundDark,
@@ -151,6 +167,7 @@ class _DrawAnimationScreenState extends State<DrawAnimationScreen> with TickerPr
             child: Stack(
               children: [
                 _buildAnimatedBackground(),
+                _buildRadarOverlay(),
                 SafeArea(
                   child: SingleChildScrollView(
                     child: Column(
@@ -193,7 +210,7 @@ class _DrawAnimationScreenState extends State<DrawAnimationScreen> with TickerPr
                   decoration: BoxDecoration(
                     gradient: RadialGradient(
                       colors: [
-                        AppTheme.primaryColor.withAlpha(20),
+                        AppTheme.primaryColor.withAlpha(15),
                         Colors.transparent,
                       ],
                     ),
@@ -207,19 +224,62 @@ class _DrawAnimationScreenState extends State<DrawAnimationScreen> with TickerPr
     );
   }
 
-  Widget _buildHeader() {
-    return Column(
-      children: [
-        const Icon(Icons.radar, color: AppTheme.goldColor, size: 40),
-        const SizedBox(height: 12),
-        Text(
-          'SCAN EN COURS',
-          style: GoogleFonts.outfit(
-            fontSize: 20,
-            fontWeight: FontWeight.w900,
-            color: Colors.white,
-            letterSpacing: 6,
+  Widget _buildRadarOverlay() {
+    return AnimatedBuilder(
+      animation: _radarController,
+      builder: (context, child) {
+        return Positioned.fill(
+          child: CustomPaint(
+            painter: RadarPainter(
+              progress: _radarController.value,
+              color: AppTheme.primaryLight.withAlpha(30),
+            ),
           ),
+        );
+      },
+    );
+  }
+
+  Widget _buildHeader() {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Column(
+          children: [
+            const Icon(Icons.radar_rounded, color: AppTheme.goldColor, size: 45),
+            const SizedBox(height: 12),
+            Text(
+              'SCAN ELITE EN COURS',
+              style: GoogleFonts.outfit(
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+                letterSpacing: 8,
+              ),
+            ),
+          ],
+        ),
+        // Scan line animation
+        AnimatedBuilder(
+          animation: _scanLineController,
+          builder: (context, child) {
+            return Positioned(
+              top: 40 + (_scanLineController.value * 60),
+              child: Container(
+                width: 300,
+                height: 2,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.transparent,
+                      AppTheme.goldColor.withAlpha(150),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ],
     );
@@ -232,10 +292,10 @@ class _DrawAnimationScreenState extends State<DrawAnimationScreen> with TickerPr
         _suspenseTexts[_currentTextIndex],
         key: ValueKey(_currentTextIndex),
         style: GoogleFonts.outfit(
-          color: AppTheme.primaryLight,
-          fontWeight: FontWeight.w800,
-          fontSize: 12,
-          letterSpacing: 1.5,
+          color: AppTheme.goldColor.withAlpha(150),
+          fontWeight: FontWeight.w900,
+          fontSize: 13,
+          letterSpacing: 2,
         ),
       ),
     );
@@ -264,11 +324,11 @@ class _DrawAnimationScreenState extends State<DrawAnimationScreen> with TickerPr
             child: Text(
               _gridNumbers[index].toString(),
               style: GoogleFonts.outfit(
-                fontSize: 14,
+                fontSize: 16,
                 fontWeight: FontWeight.w900,
                 color: isFound 
                     ? Colors.black 
-                    : (isWinnerSlot ? AppTheme.goldColor.withAlpha(180) : (isHighlighted ? Colors.white : Colors.white24)),
+                    : (isWinnerSlot ? AppTheme.goldColor.withAlpha(120) : (isHighlighted ? Colors.white : Colors.white10)),
               ),
             ),
           );
@@ -287,28 +347,23 @@ class _DrawAnimationScreenState extends State<DrawAnimationScreen> with TickerPr
             decoration: BoxDecoration(
               color: isFound 
                   ? AppTheme.goldColor 
-                  : (isHighlighted ? Colors.white.withAlpha(50) : Colors.white.withAlpha(5)),
-              borderRadius: BorderRadius.circular(8),
+                  : (isHighlighted ? Colors.white.withAlpha(20) : Colors.white.withAlpha(2)),
+              borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: isFound 
-                    ? (isLastWinner ? Colors.white : Colors.white) 
-                    : (isHighlighted ? AppTheme.primaryLight : Colors.white10),
+                    ? Colors.white 
+                    : (isHighlighted ? AppTheme.goldColor.withAlpha(100) : Colors.white.withAlpha(5)),
                 width: isFound || isHighlighted ? 2 : 1,
               ),
               boxShadow: isFound ? [
                 BoxShadow(
                   color: isLastWinner 
                       ? Colors.white.withAlpha(200) 
-                      : AppTheme.goldColor.withAlpha(100),
-                  blurRadius: isLastWinner ? 25 : 15,
+                      : AppTheme.goldColor.withAlpha(150),
+                  blurRadius: isLastWinner ? 30 : 15,
                   spreadRadius: isLastWinner ? 4 : 1,
                 )
-              ] : (isHighlighted ? [
-                BoxShadow(
-                  color: AppTheme.primaryLight.withAlpha(100),
-                  blurRadius: 10,
-                )
-              ] : []),
+              ] : [],
             ),
             child: cell,
           );
@@ -322,22 +377,29 @@ class _DrawAnimationScreenState extends State<DrawAnimationScreen> with TickerPr
       padding: const EdgeInsets.symmetric(horizontal: 50),
       child: Column(
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 6,
-              backgroundColor: Colors.white10,
-              valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.primaryLight),
+          Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white.withAlpha(10)),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 10,
+                backgroundColor: Colors.white.withAlpha(5),
+                valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.goldColor),
+              ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Text(
-            tickCount >= 20 ? 'CAPTURÉ !' : 'SIGNAL: ${(progress * 100).toInt()}%',
+            tickCount >= 20 ? 'DESTIN CAPTURÉ !' : 'INTÉGRITÉ DU SIGNAL: ${(progress * 100).toInt()}%',
             style: GoogleFonts.outfit(
-              color: tickCount >= 20 ? AppTheme.goldColor : Colors.white30,
+              color: tickCount >= 20 ? AppTheme.goldColor : Colors.white24,
               fontWeight: FontWeight.w900,
-              fontSize: 10,
+              fontSize: 11,
               letterSpacing: 2,
             ),
           ),
@@ -345,5 +407,41 @@ class _DrawAnimationScreenState extends State<DrawAnimationScreen> with TickerPr
       ),
     );
   }
+}
+
+class RadarPainter extends CustomPainter {
+  final double progress;
+  final Color color;
+
+  RadarPainter({required this.progress, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = math.min(size.width, size.height) * 0.8;
+    
+    final paint = Paint()
+      ..shader = SweepGradient(
+        center: Alignment.center,
+        startAngle: (progress * 2 * math.pi) - 0.5,
+        endAngle: progress * 2 * math.pi,
+        colors: [Colors.transparent, color],
+      ).createShader(Rect.fromCircle(center: center, radius: radius));
+
+    canvas.drawCircle(center, radius, paint);
+    
+    // Draw concentric circles
+    final circlePaint = Paint()
+      ..color = color.withAlpha(10)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+      
+    canvas.drawCircle(center, radius * 0.3, circlePaint);
+    canvas.drawCircle(center, radius * 0.6, circlePaint);
+    canvas.drawCircle(center, radius, circlePaint);
+  }
+
+  @override
+  bool shouldRepaint(RadarPainter oldDelegate) => oldDelegate.progress != progress;
 }
 

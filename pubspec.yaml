@@ -1,5 +1,5 @@
-name: lucky_numbers
-description: "Application professionnelle de tirage de numéros aléatoires"
+name: lucky_elite
+description: "Application Elite de tirage de numéros"
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -42,6 +42,21 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.13.1
+  flutter_native_splash: ^2.4.4
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/images/app_icon.png"
+  min_sdk_android: 21
+
+flutter_native_splash:
+  color: "#0F0F13"
+  image: "assets/images/app_icon.png"
+  android_12:
+    image: "assets/images/app_icon.png"
+    color: "#0F0F13"
 
 flutter:
   uses-material-design: true

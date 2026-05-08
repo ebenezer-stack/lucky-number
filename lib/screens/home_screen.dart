@@ -24,8 +24,10 @@ class _HomeScreenContent extends StatefulWidget {
   State<_HomeScreenContent> createState() => _HomeScreenContentState();
 }
 
-class _HomeScreenContentState extends State<_HomeScreenContent> with SingleTickerProviderStateMixin {
+class _HomeScreenContentState extends State<_HomeScreenContent> with TickerProviderStateMixin {
   late TabController _tabController;
+  late AnimationController _buttonPulseController;
+  
   final _minController = TextEditingController(text: '1');
   final _maxController = TextEditingController(text: '100');
   final _winnersController = TextEditingController(text: '1');
@@ -37,11 +39,27 @@ class _HomeScreenContentState extends State<_HomeScreenContent> with SingleTicke
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    
+    _buttonPulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+
+    // Initialisation immédiate avec les réglages actuels
+    final settingsState = context.read<SettingsBloc>().state;
+    if (settingsState is SettingsLoaded) {
+      _minController.text = settingsState.settings.minDefault.toString();
+      _maxController.text = settingsState.settings.maxDefault.toString();
+      _winnersController.text = settingsState.settings.defaultWinnersCount.toString();
+      _allowDuplicates = settingsState.settings.allowDuplicates;
+      _drawMode = settingsState.settings.drawMode;
+    }
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _buttonPulseController.dispose();
     _minController.dispose();
     _maxController.dispose();
     _winnersController.dispose();
@@ -83,32 +101,22 @@ class _HomeScreenContentState extends State<_HomeScreenContent> with SingleTicke
           }
         },
         child: Scaffold(
+          backgroundColor: AppTheme.backgroundDark,
           body: CustomScrollView(
             slivers: [
               _buildAppBar(),
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
                     _buildModeSelector(),
                     const SizedBox(height: 32),
                     _buildTabs(),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      height: 220,
-                      child: TabBarView(
-                        controller: _tabController,
-                        children: [
-                          _buildPlageFixe(),
-                          _buildPlagePerso(),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    _buildWinnersInput(),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
+                    _buildConfigurationGrid(),
+                    const SizedBox(height: 20),
                     _buildOptions(),
-                    const SizedBox(height: 48),
+                    const SizedBox(height: 40),
                     _buildDrawButton(),
                     const SizedBox(height: 100),
                   ]),
@@ -123,37 +131,54 @@ class _HomeScreenContentState extends State<_HomeScreenContent> with SingleTicke
 
   Widget _buildAppBar() {
     return SliverAppBar(
-      expandedHeight: 180,
+      expandedHeight: 140,
       pinned: true,
       stretch: true,
+      backgroundColor: AppTheme.backgroundDark,
       flexibleSpace: FlexibleSpaceBar(
-        titlePadding: const EdgeInsets.only(left: 24, bottom: 16),
-        title: Text(
-          'LUCKY NUMBERS',
-          style: GoogleFonts.outfit(
-            fontWeight: FontWeight.w900,
-            fontSize: 22,
-            letterSpacing: -0.5,
-            color: Colors.white,
-          ),
+        titlePadding: const EdgeInsets.only(left: 20, bottom: 20),
+        title: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'LUCKY ELITE',
+              style: GoogleFonts.outfit(
+                fontWeight: FontWeight.w900,
+                fontSize: 20,
+                letterSpacing: 3,
+                color: Colors.white,
+              ),
+            ),
+            Text(
+              'PARAMÉTRAGE DES FLUX',
+              style: GoogleFonts.outfit(
+                fontSize: 7,
+                fontWeight: FontWeight.w900,
+                color: AppTheme.goldColor.withAlpha(120),
+                letterSpacing: 1.5,
+              ),
+            ),
+          ],
         ),
-        background: Container(
-          decoration: const BoxDecoration(
-            gradient: AppTheme.primaryGradient,
-          ),
-          child: Stack(
-            children: [
-              Positioned(
-                right: -20,
-                top: -20,
-                child: Icon(
-                  Icons.casino,
-                  size: 200,
-                  color: Colors.white.withAlpha(20),
+        background: Stack(
+          children: [
+            Container(decoration: const BoxDecoration(color: AppTheme.backgroundDark)),
+            Positioned(
+              right: -30,
+              top: -30,
+              child: Container(
+                width: 200,
+                height: 200,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [AppTheme.primaryColor.withAlpha(20), Colors.transparent],
+                  ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -163,27 +188,33 @@ class _HomeScreenContentState extends State<_HomeScreenContent> with SingleTicke
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'TYPE DE TIRAGE',
-          style: GoogleFonts.outfit(
-            fontSize: 12,
-            fontWeight: FontWeight.w900,
-            color: Theme.of(context).colorScheme.primary,
-            letterSpacing: 2,
-          ),
+        Row(
+          children: [
+            Container(width: 2, height: 12, color: AppTheme.goldColor),
+            const SizedBox(width: 8),
+            Text(
+              'MÉTHODE DE TIRAGE',
+              style: GoogleFonts.outfit(
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                color: Colors.white24,
+                letterSpacing: 1.5,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.grey.withAlpha(20)),
+            color: AppTheme.surfaceDark,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withAlpha(5)),
           ),
           child: Row(
             children: [
-              _buildModeButton('random', 'Automatique', Icons.auto_awesome),
-              _buildModeButton('manual', 'Manuel (Force)', Icons.touch_app),
+              _buildModeButton('random', 'AUTO', Icons.bolt_rounded),
+              _buildModeButton('manual', 'MANUEL', Icons.lock_open_rounded),
             ],
           ),
         ),
@@ -200,34 +231,25 @@ class _HomeScreenContentState extends State<_HomeScreenContent> with SingleTicke
           setState(() => _drawMode = mode);
         },
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          duration: const Duration(milliseconds: 300),
+          padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected ? Theme.of(context).colorScheme.primary : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: isSelected ? [
-              BoxShadow(
-                color: Theme.of(context).colorScheme.primary.withAlpha(50),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              )
-            ] : [],
+            color: isSelected ? AppTheme.primaryColor.withAlpha(40) : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: isSelected ? AppTheme.goldColor.withAlpha(50) : Colors.transparent),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                icon,
-                size: 18,
-                color: isSelected ? Colors.white : Colors.grey.shade500,
-              ),
+              Icon(icon, size: 16, color: isSelected ? AppTheme.goldColor : Colors.white10),
               const SizedBox(width: 8),
               Text(
                 label,
                 style: GoogleFonts.outfit(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 13,
-                  color: isSelected ? Colors.white : Colors.grey.shade500,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 11,
+                  letterSpacing: 1,
+                  color: isSelected ? Colors.white : Colors.white10,
                 ),
               ),
             ],
@@ -238,45 +260,66 @@ class _HomeScreenContentState extends State<_HomeScreenContent> with SingleTicke
   }
 
   Widget _buildTabs() {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.grey.withAlpha(20))),
-      ),
-      child: TabBar(
+    return TabBar(
+      controller: _tabController,
+      dividerColor: Colors.transparent,
+      labelColor: AppTheme.goldColor,
+      unselectedLabelColor: Colors.white12,
+      labelStyle: GoogleFonts.outfit(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1.5),
+      indicatorColor: AppTheme.goldColor,
+      indicatorWeight: 2,
+      indicatorSize: TabBarIndicatorSize.label,
+      tabs: const [
+        Tab(text: 'INTERVALLE'),
+        Tab(text: 'SÉLECTION'),
+      ],
+    );
+  }
+
+  Widget _buildConfigurationGrid() {
+    return SizedBox(
+      height: 180,
+      child: TabBarView(
         controller: _tabController,
-        dividerColor: Colors.transparent,
-        labelColor: Theme.of(context).colorScheme.primary,
-        unselectedLabelColor: Colors.grey,
-        labelStyle: GoogleFonts.outfit(fontWeight: FontWeight.w900, fontSize: 14),
-        indicatorColor: Theme.of(context).colorScheme.primary,
-        indicatorWeight: 3,
-        tabs: const [
-          Tab(text: 'PLAGE FIXE'),
-          Tab(text: 'PLAGE PERSO'),
+        children: [
+          _buildPlageFixeGrid(),
+          _buildPlagePerso(),
         ],
       ),
     );
   }
 
-  Widget _buildPlageFixe() {
+  Widget _buildPlageFixeGrid() {
     return Padding(
-      padding: const EdgeInsets.only(top: 24),
-      child: Row(
+      padding: const EdgeInsets.only(top: 16),
+      child: Column(
         children: [
-          Expanded(
-            child: _buildInputCard(
-              controller: _minController,
-              label: 'MINIMUM',
-              icon: Icons.arrow_downward,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: _buildInputCard(
-              controller: _maxController,
-              label: 'MAXIMUM',
-              icon: Icons.arrow_upward,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: _buildInputCard(
+                  controller: _minController,
+                  label: 'MIN',
+                  icon: Icons.keyboard_arrow_down,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildInputCard(
+                  controller: _maxController,
+                  label: 'MAX',
+                  icon: Icons.keyboard_arrow_up,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildInputCard(
+                  controller: _winnersController,
+                  label: 'GAGNANTS',
+                  icon: Icons.stars_outlined,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -285,23 +328,23 @@ class _HomeScreenContentState extends State<_HomeScreenContent> with SingleTicke
 
   Widget _buildPlagePerso() {
     return Padding(
-      padding: const EdgeInsets.only(top: 24),
+      padding: const EdgeInsets.only(top: 16),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: AppTheme.mediumBorderRadius,
-          border: Border.all(color: Colors.grey.withAlpha(20)),
+          color: AppTheme.surfaceDark,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withAlpha(10)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'LISTE DE NOMBRES',
+              'LISTE PERSONNALISÉE',
               style: GoogleFonts.outfit(
-                fontSize: 10,
+                fontSize: 9,
                 fontWeight: FontWeight.w900,
-                color: Colors.grey.shade500,
+                color: AppTheme.goldColor.withAlpha(150),
                 letterSpacing: 1,
               ),
             ),
@@ -309,30 +352,27 @@ class _HomeScreenContentState extends State<_HomeScreenContent> with SingleTicke
             Expanded(
               child: TextField(
                 controller: _persoNumbersController,
-                maxLines: 4,
-                style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 16),
+                maxLines: 3,
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.w700, 
+                  fontSize: 20, 
+                  color: Colors.white,
+                  letterSpacing: 1.5,
+                ),
                 decoration: InputDecoration(
-                  hintText: 'Ex: 5, 12, 45, 67...',
-                  hintStyle: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.normal),
+                  hintText: 'Séparez vos numéros par des espaces ou virgules...',
+                  hintStyle: GoogleFonts.outfit(
+                    color: Colors.white24, 
+                    fontSize: 14, 
+                    fontWeight: FontWeight.w400
+                  ),
                   border: InputBorder.none,
                 ),
               ),
             ),
-            Text(
-              'Séparez les nombres par des virgules ou des espaces',
-              style: TextStyle(fontSize: 10, color: Colors.grey.shade400, fontWeight: FontWeight.w500),
-            ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildWinnersInput() {
-    return _buildInputCard(
-      controller: _winnersController,
-      label: 'NOMBRE DE GAGNANTS',
-      icon: Icons.emoji_events,
     );
   }
 
@@ -342,11 +382,11 @@ class _HomeScreenContentState extends State<_HomeScreenContent> with SingleTicke
     required IconData icon,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: AppTheme.mediumBorderRadius,
-        border: Border.all(color: Colors.grey.withAlpha(20)),
+        color: AppTheme.surfaceDark,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withAlpha(8)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -354,25 +394,34 @@ class _HomeScreenContentState extends State<_HomeScreenContent> with SingleTicke
           Text(
             label,
             style: GoogleFonts.outfit(
-              fontSize: 10,
+              fontSize: 9,
               fontWeight: FontWeight.w900,
-              color: Colors.grey.shade500,
-              letterSpacing: 1,
+              color: Colors.white24,
+              letterSpacing: 1.5,
             ),
           ),
-          TextField(
-            controller: controller,
-            keyboardType: TextInputType.number,
-            style: GoogleFonts.outfit(
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
-            ),
-            decoration: InputDecoration(
-              border: InputBorder.none,
-              isDense: true,
-              contentPadding: const EdgeInsets.only(top: 8),
-              icon: Icon(icon, color: Theme.of(context).colorScheme.primary, size: 20),
-            ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(icon, color: AppTheme.goldColor.withAlpha(80), size: 14),
+              const SizedBox(width: 10),
+              Expanded(
+                child: TextField(
+                  controller: controller,
+                  keyboardType: TextInputType.number,
+                  style: GoogleFonts.outfit(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                  ),
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -382,21 +431,20 @@ class _HomeScreenContentState extends State<_HomeScreenContent> with SingleTicke
   Widget _buildOptions() {
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: AppTheme.mediumBorderRadius,
-        border: Border.all(color: Colors.grey.withAlpha(20)),
+        color: AppTheme.surfaceDark,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withAlpha(5)),
       ),
       child: SwitchListTile(
-        title: const Text(
-          'Autoriser les doublons',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Text(
-          'Un même numéro peut être tiré plusieurs fois',
-          style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        title: Text(
+          'AUTORISER LES DOUBLONS',
+          style: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: Colors.white70, fontSize: 12, letterSpacing: 0.5),
         ),
         value: _allowDuplicates,
-        activeColor: Theme.of(context).colorScheme.primary,
+        activeColor: AppTheme.goldColor,
+        activeTrackColor: AppTheme.goldColor.withAlpha(30),
+        inactiveTrackColor: Colors.white.withAlpha(5),
         onChanged: (value) {
           HapticService().selectionClick();
           setState(() => _allowDuplicates = value);
@@ -406,38 +454,39 @@ class _HomeScreenContentState extends State<_HomeScreenContent> with SingleTicke
   }
 
   Widget _buildDrawButton() {
-    return Container(
-      decoration: BoxDecoration(
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).colorScheme.primary.withAlpha(80),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+    return AnimatedBuilder(
+      animation: _buttonPulseController,
+      builder: (context, child) {
+        return Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primaryColor.withAlpha((40 + (30 * _buttonPulseController.value)).toInt()),
+                blurRadius: 15 + (10 * _buttonPulseController.value),
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: FilledButton(
-        onPressed: _onLancerTirage,
-        style: FilledButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.auto_awesome),
-            const SizedBox(width: 12),
-            Text(
+          child: FilledButton(
+            onPressed: _onLancerTirage,
+            style: FilledButton.styleFrom(
+              backgroundColor: AppTheme.primaryColor,
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            ),
+            child: Text(
               'LANCER LE TIRAGE',
               style: GoogleFonts.outfit(
-                fontSize: 18,
+                fontSize: 14,
                 fontWeight: FontWeight.w900,
-                letterSpacing: 1,
+                letterSpacing: 2,
               ),
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -453,95 +502,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> with SingleTicke
 
   void _showManualWinnersDialog() {
     final winnersCount = int.tryParse(_winnersController.text) ?? 1;
-    final winnersControllers = List.generate(winnersCount, (_) => TextEditingController());
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppTheme.backgroundDark,
-        title: Text(
-          'CHOISIR LES GAGNANTS',
-          style: GoogleFonts.outfit(
-            color: Colors.white,
-            fontWeight: FontWeight.w900,
-            fontSize: 18,
-          ),
-        ),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Saisissez les numéros qui doivent sortir pour ce tirage.',
-                style: GoogleFonts.outfit(color: Colors.white.withAlpha(150), fontSize: 13, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 20),
-              Flexible(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: winnersCount,
-                  itemBuilder: (context, index) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: TextField(
-                      controller: winnersControllers[index],
-                      keyboardType: TextInputType.number,
-                      autofocus: index == 0,
-                      style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold),
-                      decoration: InputDecoration(
-                        labelText: 'Gagnant #${index + 1}',
-                        labelStyle: GoogleFonts.outfit(color: Colors.grey, fontWeight: FontWeight.w500),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Colors.white24),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: AppTheme.primaryLight),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('ANNULER'),
-          ),
-          FilledButton(
-            onPressed: () {
-              final winners = winnersControllers
-                  .map((c) => int.tryParse(c.text))
-                  .whereType<int>()
-                  .toList();
-              
-              if (winners.length < winnersCount) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Veuillez saisir tous les numéros')),
-                );
-                return;
-              }
-              
-              Navigator.pop(dialogContext);
-              _performManualForcedDraw(winners);
-            },
-            child: const Text('CONFIRMER'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _performDraw() {
-    final winners = int.tryParse(_winnersController.text) ?? 1;
+    List<int> pool = [];
     
     if (_tabController.index == 0) {
-      // Plage Fixe
       final min = int.tryParse(_minController.text) ?? 1;
       final max = int.tryParse(_maxController.text) ?? 100;
       
@@ -550,26 +513,184 @@ class _HomeScreenContentState extends State<_HomeScreenContent> with SingleTicke
         return;
       }
       
-      context.read<DrawBloc>().add(PerformRandomDraw(
-        min: min,
-        max: max,
-        winnersCount: winners,
-        allowDuplicates: _allowDuplicates,
-      ));
+      if (winnersCount > (max - min + 1) && !_allowDuplicates) {
+        _showError('Pas assez de numéros pour $winnersCount gagnants sans doublons');
+        return;
+      }
+
+      if (max - min > 500) {
+        _showError('Plage trop large pour la sélection manuelle (max 500)');
+        return;
+      }
+      pool = List.generate(max - min + 1, (i) => min + i);
     } else {
-      // Plage Perso
       final text = _persoNumbersController.text;
-      final pool = text
-          .split(RegExp(r'[,\s]+'))
-          .map((s) => int.tryParse(s.trim()))
-          .whereType<int>()
-          .toList();
+      pool = text.split(RegExp(r'[,\s]+')).map((s) => int.tryParse(s.trim())).whereType<int>().toList();
       
       if (pool.isEmpty) {
         _showError('Veuillez saisir une liste de nombres');
         return;
       }
       
+      if (winnersCount > pool.length && !_allowDuplicates) {
+        _showError('Pas assez de numéros dans votre liste ($winnersCount gagnants demandés)');
+        return;
+      }
+    }
+
+    final List<int> selectedWinners = [];
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setModalState) {
+          final isReady = selectedWinners.length == winnersCount;
+
+          return AlertDialog(
+            backgroundColor: AppTheme.backgroundDark,
+            surfaceTintColor: Colors.transparent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(28),
+              side: BorderSide(color: Colors.white.withAlpha(10)),
+            ),
+            title: Column(
+              children: [
+                Text(
+                  'SÉLECTION MANUELLE',
+                  style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 2),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'CHOISISSEZ $winnersCount GAGNANT${winnersCount > 1 ? 'S' : ''}',
+                  style: GoogleFonts.outfit(color: AppTheme.goldColor, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1),
+                ),
+              ],
+            ),
+            content: SizedBox(
+              width: double.maxFinite,
+              height: 400,
+              child: Column(
+                children: [
+                  const SizedBox(height: 10),
+                  Expanded(
+                    child: GridView.builder(
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 5,
+                        mainAxisSpacing: 8,
+                        crossAxisSpacing: 8,
+                      ),
+                      itemCount: pool.length,
+                      itemBuilder: (context, index) {
+                        final number = pool[index];
+                        final isSelected = selectedWinners.contains(number);
+                        
+                        return GestureDetector(
+                          onTap: () {
+                            setModalState(() {
+                              if (isSelected) {
+                                selectedWinners.remove(number);
+                              } else if (selectedWinners.length < winnersCount) {
+                                selectedWinners.add(number);
+                                HapticService().selectionClick();
+                              }
+                            });
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            decoration: BoxDecoration(
+                              color: isSelected ? AppTheme.goldColor : AppTheme.surfaceDark,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isSelected ? Colors.white : Colors.white.withAlpha(10),
+                                width: isSelected ? 2 : 1,
+                              ),
+                              boxShadow: isSelected ? [
+                                BoxShadow(color: AppTheme.goldColor.withAlpha(100), blurRadius: 10)
+                              ] : [],
+                            ),
+                            child: Center(
+                              child: Text(
+                                number.toString(),
+                                style: GoogleFonts.outfit(
+                                  color: isSelected ? Colors.black : Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: Text('ANNULER', style: GoogleFonts.outfit(color: Colors.white24, fontWeight: FontWeight.w900)),
+              ),
+              FilledButton(
+                onPressed: isReady ? () {
+                  Navigator.pop(dialogContext);
+                  _performManualForcedDraw(selectedWinners);
+                } : null,
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  disabledBackgroundColor: Colors.white.withAlpha(5),
+                ),
+                child: Text(
+                  'CONFIRMER (${selectedWinners.length}/$winnersCount)',
+                  style: GoogleFonts.outfit(fontWeight: FontWeight.w900),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  void _performDraw() {
+    final winners = int.tryParse(_winnersController.text) ?? 1;
+    if (winners <= 0) {
+      _showError('Le nombre de gagnants doit être au moins 1');
+      return;
+    }
+
+    if (_tabController.index == 0) {
+      final min = int.tryParse(_minController.text) ?? 1;
+      final max = int.tryParse(_maxController.text) ?? 100;
+      
+      if (min >= max) {
+        _showError('Le minimum doit être inférieur au maximum');
+        return;
+      }
+
+      if (winners > (max - min + 1) && !_allowDuplicates) {
+        _showError('Impossible de tirer $winners gagnants sans doublons dans cette plage');
+        return;
+      }
+
+      context.read<DrawBloc>().add(PerformRandomDraw(
+        min: min, max: max, winnersCount: winners, allowDuplicates: _allowDuplicates,
+      ));
+    } else {
+      final text = _persoNumbersController.text;
+      final pool = text.split(RegExp(r'[,\s]+')).map((s) => int.tryParse(s.trim())).whereType<int>().toList();
+      
+      if (pool.isEmpty) {
+        _showError('Veuillez saisir une liste de nombres');
+        return;
+      }
+
+      if (winners > pool.length && !_allowDuplicates) {
+        _showError('Votre liste est trop courte pour $winners gagnants sans doublons');
+        return;
+      }
+
       context.read<DrawBloc>().add(PerformRandomDraw(
         min: pool.reduce((a, b) => a < b ? a : b),
         max: pool.reduce((a, b) => a > b ? a : b),
@@ -583,24 +704,16 @@ class _HomeScreenContentState extends State<_HomeScreenContent> with SingleTicke
   void _performManualForcedDraw(List<int> winners) {
     final min = int.tryParse(_minController.text) ?? 1;
     final max = int.tryParse(_maxController.text) ?? 100;
-    
-    context.read<DrawBloc>().add(PerformForcedDraw(
-      winners: winners,
-      min: min,
-      max: max,
-    ));
+    context.read<DrawBloc>().add(PerformForcedDraw(winners: winners, min: min, max: max));
   }
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: AppTheme.errorColor,
-        behavior: SnackBarBehavior.floating,
-      ),
+      SnackBar(content: Text(message), backgroundColor: AppTheme.errorColor, behavior: SnackBarBehavior.floating),
     );
   }
 }
+
 
 
 

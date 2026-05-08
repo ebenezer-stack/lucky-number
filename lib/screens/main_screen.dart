@@ -37,12 +37,15 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.backgroundDark,
       body: _screens[_currentIndex],
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
+          color: AppTheme.surfaceDark,
+          border: Border(top: BorderSide(color: Colors.white.withAlpha(5))),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withAlpha(20),
+              color: Colors.black.withAlpha(30),
               blurRadius: 20,
               offset: const Offset(0, -5),
             ),
@@ -52,15 +55,15 @@ class _MainScreenState extends State<MainScreen> {
           selectedIndex: _currentIndex,
           onDestinationSelected: (index) => setState(() => _currentIndex = index),
           elevation: 0,
-          backgroundColor: Theme.of(context).cardColor,
-          indicatorColor: AppTheme.primaryColor.withAlpha(20),
+          backgroundColor: AppTheme.surfaceDark,
+          indicatorColor: AppTheme.primaryColor.withAlpha(40),
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-          height: 70,
+          height: 80,
           destinations: [
-            _buildDestination(0, 'Tirage', Icons.casino_outlined, Icons.casino),
-            _buildDestination(1, 'Historique', Icons.history_outlined, Icons.history),
-            _buildDestination(2, 'Stats', Icons.bar_chart_outlined, Icons.bar_chart),
-            _buildDestination(3, 'Profil', Icons.person_outline, Icons.person),
+            _buildDestination(0, 'TIRAGE', Icons.casino_outlined, Icons.casino),
+            _buildDestination(1, 'HISTORIQUE', Icons.history_outlined, Icons.history),
+            _buildDestination(2, 'ANALYSE', Icons.bar_chart_outlined, Icons.bar_chart),
+            _buildDestination(3, 'PROFIL', Icons.person_outline, Icons.person),
           ],
         ),
       ),
@@ -70,8 +73,8 @@ class _MainScreenState extends State<MainScreen> {
   NavigationDestination _buildDestination(int index, String label, IconData icon, IconData selectedIcon) {
     final isSelected = _currentIndex == index;
     return NavigationDestination(
-      icon: Icon(icon, color: Colors.grey.shade500),
-      selectedIcon: Icon(selectedIcon, color: AppTheme.primaryColor),
+      icon: Icon(icon, color: Colors.white38),
+      selectedIcon: Icon(selectedIcon, color: AppTheme.goldColor),
       label: label,
     );
   }

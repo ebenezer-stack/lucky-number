@@ -23,11 +23,11 @@ void main() {
     ),
   );
 
-  runApp(const LuckyNumbersApp());
+  runApp(const LuckyEliteApp());
 }
 
-class LuckyNumbersApp extends StatelessWidget {
-  const LuckyNumbersApp({super.key});
+class LuckyEliteApp extends StatelessWidget {
+  const LuckyEliteApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +61,7 @@ class LuckyNumbersApp extends StatelessWidget {
           }
 
           return MaterialApp(
-            title: 'Lucky Numbers',
+            title: 'Lucky Elite',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,

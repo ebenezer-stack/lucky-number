@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../blocs/settings_bloc.dart';
+import '../models/settings_model.dart';
 import '../theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -58,9 +59,23 @@ class SettingsScreen extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           sliver: SliverList(
             delegate: SliverChildListDelegate([
+              /*
               _buildSectionHeader('APPARENCE'),
               const SizedBox(height: 16),
               _buildThemeSelector(context, settings.theme),
+              const SizedBox(height: 40),
+              */
+              _buildSectionHeader('VALEURS PAR DÉFAUT'),
+              const SizedBox(height: 16),
+              _buildDefaultValuesGrid(context, settings),
+              _buildSettingCard(
+                context,
+                'DOUBLONS PAR DÉFAUT',
+                'Autoriser les répétitions au démarrage',
+                Icons.copy_rounded,
+                settings.allowDuplicates,
+                () => context.read<SettingsBloc>().add(ToggleDuplicates()),
+              ),
               const SizedBox(height: 40),
               _buildSectionHeader('EXPÉRIENCE'),
               const SizedBox(height: 16),
@@ -216,6 +231,79 @@ class SettingsScreen extends StatelessWidget {
           activeTrackColor: AppTheme.goldColor.withAlpha(50),
           inactiveTrackColor: Colors.white10,
         ),
+      ),
+    );
+  }
+
+  Widget _buildDefaultValuesGrid(BuildContext context, AppSettings settings) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildCompactNumericInput(
+              context, 
+              'MIN', 
+              settings.minDefault.toString(),
+              (val) => context.read<SettingsBloc>().add(UpdateMinRange(int.tryParse(val) ?? 1)),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildCompactNumericInput(
+              context, 
+              'MAX', 
+              settings.maxDefault.toString(),
+              (val) => context.read<SettingsBloc>().add(UpdateMaxRange(int.tryParse(val) ?? 100)),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildCompactNumericInput(
+              context, 
+              'GAGNANTS', 
+              settings.defaultWinnersCount.toString(),
+              (val) => context.read<SettingsBloc>().add(UpdateDefaultWinners(int.tryParse(val) ?? 1)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompactNumericInput(BuildContext context, String label, String value, Function(String) onChanged) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceDark,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withAlpha(5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label, 
+            style: GoogleFonts.outfit(
+              fontSize: 9, 
+              fontWeight: FontWeight.w900, 
+              color: Colors.white24, 
+              letterSpacing: 1
+            )
+          ),
+          const SizedBox(height: 4),
+          TextField(
+            controller: TextEditingController(text: value)..selection = TextSelection.fromPosition(TextPosition(offset: value.length)),
+            keyboardType: TextInputType.number,
+            onSubmitted: onChanged,
+            style: GoogleFonts.outfit(color: AppTheme.goldColor, fontWeight: FontWeight.w900, fontSize: 16),
+            decoration: const InputDecoration(
+              isDense: true,
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.zero,
+            ),
+          ),
+        ],
       ),
     );
   }
