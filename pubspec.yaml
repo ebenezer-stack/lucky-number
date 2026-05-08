@@ -1,0 +1,50 @@
+name: lucky_numbers
+description: "Application professionnelle de tirage de numéros aléatoires"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  
+  # Base de données
+  sqflite: ^2.4.2
+  path_provider: ^2.1.5
+  path: ^1.9.1
+  
+  # État et gestion
+  flutter_bloc: ^9.1.1
+  equatable: ^2.0.8
+  
+  # UI et animations
+  google_fonts: ^6.3.0
+  fl_chart: ^0.70.2
+  confetti: ^0.8.0
+  
+  # Sons et vibration
+  audioplayers: ^6.4.0
+  vibration: ^3.1.8
+  
+  # Partage et utilitaires
+  share_plus: ^11.0.0
+  intl: ^0.20.2
+  shared_preferences: ^2.5.3
+  
+  # Internationalisation
+  flutter_localizations:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/images/
