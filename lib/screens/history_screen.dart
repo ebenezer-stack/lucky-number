@@ -139,96 +139,125 @@ class _HistoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceDark,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withAlpha(10)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(20),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+    return Dismissible(
+      key: Key(draw.id.toString()),
+      direction: DismissDirection.endToStart,
+      confirmDismiss: (direction) async {
+        return true;
+      },
+      onDismissed: (direction) {
+        context.read<DrawBloc>().add(DeleteDraw(draw.id!));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Tirage supprimé', style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+            backgroundColor: AppTheme.errorColor.withAlpha(200),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 2),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
-        ],
+        );
+      },
+      background: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 25),
+        decoration: BoxDecoration(
+          color: AppTheme.errorColor.withAlpha(180),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Icon(Icons.delete_sweep_outlined, color: Colors.white, size: 30),
       ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => ResultScreen(draw: draw)),
-          );
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: AppTheme.backgroundDark,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppTheme.goldColor.withAlpha(50)),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceDark,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withAlpha(10)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(20),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => ResultScreen(draw: draw)),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: AppTheme.backgroundDark,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppTheme.goldColor.withAlpha(50)),
+                  ),
+                  child: const Center(
+                    child: Icon(Icons.emoji_events_outlined, color: AppTheme.goldColor, size: 28),
+                  ),
                 ),
-                child: const Center(
-                  child: Icon(Icons.emoji_events_outlined, color: AppTheme.goldColor, size: 28),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      draw.winningNumbers.join(' • '),
-                      style: GoogleFonts.outfit(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 20,
-                        color: Colors.white,
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        draw.winningNumbers.join(' • '),
+                        style: GoogleFonts.outfit(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 20,
+                          color: Colors.white,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: draw.mode == 'random' ? AppTheme.primaryColor.withAlpha(40) : AppTheme.goldColor.withAlpha(40),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            draw.mode == 'random' ? 'ALÉATOIRE' : 'MANUEL',
-                            style: GoogleFonts.outfit(
-                              color: draw.mode == 'random' ? AppTheme.primaryLight : AppTheme.goldColor,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 1,
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: draw.mode == 'random' ? AppTheme.primaryColor.withAlpha(40) : AppTheme.goldColor.withAlpha(40),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              draw.mode == 'random' ? 'ALÉATOIRE' : 'MANUEL',
+                              style: GoogleFonts.outfit(
+                                color: draw.mode == 'random' ? AppTheme.primaryLight : AppTheme.goldColor,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1,
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          DateFormat('dd MMM • HH:mm').format(draw.date),
-                          style: GoogleFonts.outfit(
-                            color: Colors.white38,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
+                          const SizedBox(width: 8),
+                          Text(
+                            DateFormat('dd MMM • HH:mm').format(draw.date),
+                            style: GoogleFonts.outfit(
+                              color: Colors.white38,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.share_outlined, color: Colors.white30, size: 20),
-                onPressed: () => ShareService().shareDrawResult(draw),
-              ),
-            ],
+                IconButton(
+                  icon: const Icon(Icons.share_outlined, color: Colors.white30, size: 20),
+                  onPressed: () => ShareService().shareDrawResult(draw),
+                ),
+              ],
+            ),
           ),
         ),
       ),

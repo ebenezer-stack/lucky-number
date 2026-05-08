@@ -21,9 +21,16 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _createDB,
+      onUpgrade: _onUpgrade,
     );
+  }
+
+  Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute('ALTER TABLE settings ADD COLUMN discrete_mode_enabled INTEGER NOT NULL DEFAULT 1');
+    }
   }
 
   Future _createDB(Database db, int version) async {
@@ -51,7 +58,8 @@ class DatabaseHelper {
         vibration_enabled INTEGER NOT NULL DEFAULT 1,
         animations_enabled INTEGER NOT NULL DEFAULT 1,
         allow_duplicates INTEGER NOT NULL DEFAULT 0,
-        draw_mode TEXT NOT NULL DEFAULT 'random'
+        draw_mode TEXT NOT NULL DEFAULT 'random',
+        discrete_mode_enabled INTEGER NOT NULL DEFAULT 1
       )
     ''');
 
@@ -73,6 +81,7 @@ class DatabaseHelper {
       'animations_enabled': 1,
       'allow_duplicates': 0,
       'draw_mode': 'random',
+      'discrete_mode_enabled': 1,
     });
   }
 

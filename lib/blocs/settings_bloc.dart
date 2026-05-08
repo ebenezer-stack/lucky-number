@@ -38,6 +38,7 @@ class ToggleSound extends SettingsEvent {}
 class ToggleVibration extends SettingsEvent {}
 class ToggleAnimations extends SettingsEvent {}
 class ToggleDuplicates extends SettingsEvent {}
+class ToggleDiscreteMode extends SettingsEvent {}
 class UpdateDrawMode extends SettingsEvent {
   final String mode;
   const UpdateDrawMode(this.mode);
@@ -82,6 +83,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     on<ToggleVibration>(_onToggleVibration);
     on<ToggleAnimations>(_onToggleAnimations);
     on<ToggleDuplicates>(_onToggleDuplicates);
+    on<ToggleDiscreteMode>(_onToggleDiscreteMode);
     on<UpdateDrawMode>(_onUpdateDrawMode);
   }
 
@@ -140,6 +142,12 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   Future<void> _onToggleDuplicates(ToggleDuplicates event, Emitter<SettingsState> emit) async {
     if (_currentSettings == null) return;
     final newSettings = _currentSettings!.copyWith(allowDuplicates: !_currentSettings!.allowDuplicates);
+    await _saveSettings(newSettings, emit);
+  }
+
+  Future<void> _onToggleDiscreteMode(ToggleDiscreteMode event, Emitter<SettingsState> emit) async {
+    if (_currentSettings == null) return;
+    final newSettings = _currentSettings!.copyWith(discreteModeEnabled: !_currentSettings!.discreteModeEnabled);
     await _saveSettings(newSettings, emit);
   }
 

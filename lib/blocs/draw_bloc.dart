@@ -154,7 +154,7 @@ class DrawBloc extends Bloc<DrawEvent, DrawState> {
   Timer? _animationTimer;
   List<int>? _finalNumbers;
   int _tickCount = 0;
-  static const int _totalTicks = 20;
+  static const int _totalTicks = 300;
 
   DrawBloc({DatabaseHelper? database})
       : _database = database ?? DatabaseHelper.instance,
@@ -230,7 +230,8 @@ class DrawBloc extends Bloc<DrawEvent, DrawState> {
   ) async {
     _finalNumbers = List<int>.from(event.winners)..sort();
     _tickCount = 0;
-    _startAnimation(event.min, event.max, event.winners.length, 'manual', emit);
+    // On utilise 'random' comme mode pour que ça apparaisse comme un tirage normal dans l'historique
+    _startAnimation(event.min, event.max, event.winners.length, 'random', emit);
   }
 
   void _startAnimation(int min, int max, int count, String mode, Emitter<DrawState> emit, {List<int>? candidatePool}) {
@@ -238,7 +239,7 @@ class DrawBloc extends Bloc<DrawEvent, DrawState> {
     
     _animationTimer?.cancel();
     _animationTimer = Timer.periodic(
-      const Duration(milliseconds: 100),
+      const Duration(milliseconds: 150),
       (timer) {
         _tickCount++;
         
@@ -365,7 +366,12 @@ class DrawBloc extends Bloc<DrawEvent, DrawState> {
     Emitter<DrawState> emit,
   ) async {
     try {
+      // Mise à jour optimiste pour éviter l'erreur de Dismissible
+      final newHistory = state.history.where((d) => d.id != event.id).toList();
+      emit(state.copyWith(history: newHistory));
+      
       await _database.deleteDraw(event.id);
+      // On recharge quand même pour être sûr de la cohérence (offset, pagination, etc.)
       add(const LoadDrawHistory());
     } catch (e) {
       emit(state.copyWith(error: 'Erreur lors de la suppression: $e'));

@@ -9,6 +9,7 @@ class AppSettings {
   final bool animationsEnabled;
   final bool allowDuplicates;
   final String drawMode;
+  final bool discreteModeEnabled;
 
   AppSettings({
     this.id,
@@ -21,6 +22,7 @@ class AppSettings {
     this.animationsEnabled = true,
     this.allowDuplicates = false,
     this.drawMode = 'random',
+    this.discreteModeEnabled = true,
   });
 
   Map<String, dynamic> toMap() {
@@ -35,6 +37,7 @@ class AppSettings {
       'animations_enabled': animationsEnabled ? 1 : 0,
       'allow_duplicates': allowDuplicates ? 1 : 0,
       'draw_mode': drawMode,
+      'discrete_mode_enabled': discreteModeEnabled ? 1 : 0,
     };
   }
 
@@ -50,6 +53,7 @@ class AppSettings {
       animationsEnabled: map['animations_enabled'] == 1,
       allowDuplicates: map['allow_duplicates'] == 1,
       drawMode: map['draw_mode'] as String,
+      discreteModeEnabled: map['discrete_mode_enabled'] == 1,
     );
   }
 
@@ -64,6 +68,7 @@ class AppSettings {
     bool? animationsEnabled,
     bool? allowDuplicates,
     String? drawMode,
+    bool? discreteModeEnabled,
   }) {
     return AppSettings(
       id: id ?? this.id,
@@ -76,6 +81,7 @@ class AppSettings {
       animationsEnabled: animationsEnabled ?? this.animationsEnabled,
       allowDuplicates: allowDuplicates ?? this.allowDuplicates,
       drawMode: drawMode ?? this.drawMode,
+      discreteModeEnabled: discreteModeEnabled ?? this.discreteModeEnabled,
     );
   }
 }

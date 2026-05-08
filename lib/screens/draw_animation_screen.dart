@@ -23,6 +23,8 @@ class _DrawAnimationScreenState extends State<DrawAnimationScreen> with TickerPr
   final List<int> _gridNumbers = [];
   final List<int> _winnerIndices = [];
   final List<int> _foundWinnerIndices = [];
+  final Map<int, int> _revealTicks = {}; // index -> tickCount quand trouvé
+  final List<int> _alreadyRevealedIndices = []; // index déjà révélés (après suspense)
   int _highlightedIndex = -1;
   final math.Random _random = math.Random();
   
@@ -141,21 +143,62 @@ class _DrawAnimationScreenState extends State<DrawAnimationScreen> with TickerPr
           _initializeGrid(state.finalNumbers!.length, 1, 100, state.finalNumbers!);
         }
 
-        _highlightedIndex = _random.nextInt(_gridNumbers.length);
-        
-        const totalTicks = 20.0;
+        const totalTicks = 300.0;
         final progress = (state.tickCount / totalTicks).clamp(0.0, 1.0);
         
-        final revealedWinnerCount = state.tickCount >= totalTicks 
-            ? state.finalNumbers!.length 
-            : ((progress * (state.finalNumbers!.length + 0.5))).floor()
-                .clamp(0, state.finalNumbers!.length);
+        final totalWinners = state.finalNumbers!.length;
+        int revealedWinnerCount;
         
+        if (totalWinners <= 0) {
+          revealedWinnerCount = 0;
+        } else if (totalWinners == 1) {
+          revealedWinnerCount = state.tickCount >= 266 ? 1 : 0;
+        } else {
+          if (state.tickCount >= 266) {
+            revealedWinnerCount = totalWinners;
+          } else {
+            final subProgress = (state.tickCount / 200.0).clamp(0.0, 1.0);
+            revealedWinnerCount = (subProgress * (totalWinners - 0.5)).floor().clamp(0, totalWinners - 1);
+          }
+        }
+        
+        final lastWinnerIdx = _winnerIndices.isNotEmpty ? _winnerIndices.last : -1;
+
+        // Mise à jour des gagnants trouvés
         for (int i = 0; i < revealedWinnerCount && i < _winnerIndices.length; i++) {
-          if (!_foundWinnerIndices.contains(_winnerIndices[i])) {
-            _foundWinnerIndices.add(_winnerIndices[i]);
+          final idx = _winnerIndices[i];
+          if (!_foundWinnerIndices.contains(idx)) {
+            _foundWinnerIndices.add(idx);
+            _revealTicks[idx] = state.tickCount;
             HapticService().mediumVibration();
           }
+        }
+
+        // Vibrations de verrouillage
+        for (final idx in _foundWinnerIndices) {
+          final foundAtTick = _revealTicks[idx];
+          final isLast = idx == lastWinnerIdx;
+          final requiredTicks = isLast ? 34 : 15;
+          
+          if (foundAtTick != null && (state.tickCount - foundAtTick >= requiredTicks) && !_alreadyRevealedIndices.contains(idx)) {
+            _alreadyRevealedIndices.add(idx);
+            HapticService().successVibration();
+          }
+        }
+
+        // Calcul du compte à rebours
+        int? countdown;
+        if (_foundWinnerIndices.contains(lastWinnerIdx) && !_alreadyRevealedIndices.contains(lastWinnerIdx)) {
+          final elapsed = state.tickCount - _revealTicks[lastWinnerIdx]!;
+          countdown = 5 - (elapsed / 6.8).floor();
+          if (countdown < 0) countdown = 0;
+        }
+
+        // Gestion du focus du scan (gel si décompte actif ou dernier numéro révélé)
+        if (countdown != null || (lastWinnerIdx != -1 && _alreadyRevealedIndices.contains(lastWinnerIdx))) {
+          _highlightedIndex = lastWinnerIdx;
+        } else {
+          _highlightedIndex = _random.nextInt(_gridNumbers.length);
         }
 
         return Scaffold(
@@ -168,6 +211,7 @@ class _DrawAnimationScreenState extends State<DrawAnimationScreen> with TickerPr
               children: [
                 _buildAnimatedBackground(),
                 _buildRadarOverlay(),
+                if (countdown != null) _buildCountdownOverlay(countdown),
                 SafeArea(
                   child: SingleChildScrollView(
                     child: Column(
@@ -304,8 +348,8 @@ class _DrawAnimationScreenState extends State<DrawAnimationScreen> with TickerPr
   Widget _buildScannerGrid(DrawState state) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      height: 400,
       child: GridView.builder(
+        shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 6,
@@ -315,20 +359,30 @@ class _DrawAnimationScreenState extends State<DrawAnimationScreen> with TickerPr
         itemCount: _gridNumbers.length,
         itemBuilder: (context, index) {
           final isHighlighted = index == _highlightedIndex;
-          final isWinnerSlot = _winnerIndices.contains(index);
           final isFound = _foundWinnerIndices.contains(index);
           
+          // Effet de suspense : si trouvé depuis moins de 15 ticks (ou 34 pour le dernier), on continue de faire défiler intensément
+          final foundAtTick = _revealTicks[index];
+          final isLast = _winnerIndices.isNotEmpty && index == _winnerIndices.last;
+          final requiredTicks = isLast ? 34 : 15;
+          
+          final isRevealing = foundAtTick != null && (state.tickCount - foundAtTick < requiredTicks);
+          final isRevealed = foundAtTick != null && (state.tickCount - foundAtTick >= requiredTicks || state.status == DrawStatus.finishing);
+          
+          final displayNumber = isRevealed ? _gridNumbers[index] : (_random.nextInt(99) + 1);
+          
+          final isWinnerSlot = _winnerIndices.contains(index);
           final isLastWinner = isFound && _foundWinnerIndices.last == index && state.status == DrawStatus.finishing;
 
           Widget cell = Center(
             child: Text(
-              _gridNumbers[index].toString(),
+              displayNumber.toString(),
               style: GoogleFonts.outfit(
                 fontSize: 16,
                 fontWeight: FontWeight.w900,
                 color: isFound 
                     ? Colors.black 
-                    : (isWinnerSlot ? AppTheme.goldColor.withAlpha(120) : (isHighlighted ? Colors.white : Colors.white10)),
+                    : (isHighlighted ? Colors.white : Colors.white10),
               ),
             ),
           );
@@ -345,17 +399,17 @@ class _DrawAnimationScreenState extends State<DrawAnimationScreen> with TickerPr
           return AnimatedContainer(
             duration: const Duration(milliseconds: 100),
             decoration: BoxDecoration(
-              color: isFound 
+              color: isRevealed
                   ? AppTheme.goldColor 
-                  : (isHighlighted ? Colors.white.withAlpha(20) : Colors.white.withAlpha(2)),
+                  : (isRevealing ? Colors.white : (isHighlighted ? Colors.white.withAlpha(20) : Colors.white.withAlpha(2))),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: isFound 
+                color: isRevealed
                     ? Colors.white 
-                    : (isHighlighted ? AppTheme.goldColor.withAlpha(100) : Colors.white.withAlpha(5)),
-                width: isFound || isHighlighted ? 2 : 1,
+                    : (isRevealing ? AppTheme.goldColor : (isHighlighted ? AppTheme.goldColor.withAlpha(100) : Colors.white.withAlpha(5))),
+                width: isRevealed || isRevealing || isHighlighted ? 2 : 1,
               ),
-              boxShadow: isFound ? [
+              boxShadow: isRevealed ? [
                 BoxShadow(
                   color: isLastWinner 
                       ? Colors.white.withAlpha(200) 
@@ -363,7 +417,13 @@ class _DrawAnimationScreenState extends State<DrawAnimationScreen> with TickerPr
                   blurRadius: isLastWinner ? 30 : 15,
                   spreadRadius: isLastWinner ? 4 : 1,
                 )
-              ] : [],
+              ] : (isRevealing ? [
+                BoxShadow(
+                  color: Colors.white.withAlpha(200),
+                  blurRadius: 20,
+                  spreadRadius: 2,
+                )
+              ] : []),
             ),
             child: cell,
           );
@@ -395,15 +455,47 @@ class _DrawAnimationScreenState extends State<DrawAnimationScreen> with TickerPr
           ),
           const SizedBox(height: 16),
           Text(
-            tickCount >= 20 ? 'DESTIN CAPTURÉ !' : 'INTÉGRITÉ DU SIGNAL: ${(progress * 100).toInt()}%',
+            tickCount >= 300 ? 'DESTIN CAPTURÉ !' : 'INTÉGRITÉ DU SIGNAL: ${(progress * 100).toInt()}%',
             style: GoogleFonts.outfit(
-              color: tickCount >= 20 ? AppTheme.goldColor : Colors.white24,
+              color: tickCount >= 300 ? AppTheme.goldColor : Colors.white24,
               fontWeight: FontWeight.w900,
               fontSize: 11,
               letterSpacing: 2,
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCountdownOverlay(int count) {
+    return Container(
+      color: Colors.black.withAlpha(100),
+      child: Center(
+        child: TweenAnimationBuilder<double>(
+          key: ValueKey(count),
+          tween: Tween(begin: 1.0, end: 2.0),
+          duration: const Duration(milliseconds: 500),
+          builder: (context, value, child) {
+            return Opacity(
+              opacity: (2.0 - value).clamp(0.0, 1.0),
+              child: Transform.scale(
+                scale: value,
+                child: Text(
+                  count.toString(),
+                  style: GoogleFonts.outfit(
+                    fontSize: 180,
+                    fontWeight: FontWeight.w900,
+                    color: AppTheme.goldColor,
+                    shadows: [
+                      const Shadow(color: Colors.white, blurRadius: 30),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }

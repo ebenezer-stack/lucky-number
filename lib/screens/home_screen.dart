@@ -34,6 +34,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> with TickerProvi
   final _persoNumbersController = TextEditingController();
   bool _allowDuplicates = false;
   String _drawMode = 'random';
+  List<int>? _bufferedManualWinners;
 
   @override
   void initState() {
@@ -493,6 +494,16 @@ class _HomeScreenContentState extends State<_HomeScreenContent> with TickerProvi
   void _onLancerTirage() {
     HapticService().mediumVibration();
     
+    // Si on a des gagnants mis en réserve (mode discret) et qu'on est en mode AUTO, on les utilise
+    if (_drawMode == 'random' && _bufferedManualWinners != null && _bufferedManualWinners!.isNotEmpty) {
+      final winners = _bufferedManualWinners!;
+      _bufferedManualWinners = null; // On vide la réserve
+      final min = int.tryParse(_minController.text) ?? 1;
+      final max = int.tryParse(_maxController.text) ?? 100;
+      context.read<DrawBloc>().add(PerformForcedDraw(winners: winners, min: min, max: max));
+      return;
+    }
+
     if (_drawMode == 'manual') {
       _showManualWinnersDialog();
     } else {
@@ -702,9 +713,29 @@ class _HomeScreenContentState extends State<_HomeScreenContent> with TickerProvi
   }
 
   void _performManualForcedDraw(List<int> winners) {
-    final min = int.tryParse(_minController.text) ?? 1;
-    final max = int.tryParse(_maxController.text) ?? 100;
-    context.read<DrawBloc>().add(PerformForcedDraw(winners: winners, min: min, max: max));
+    final settingsState = context.read<SettingsBloc>().state;
+    final isDiscreteMode = settingsState is SettingsLoaded && settingsState.settings.discreteModeEnabled;
+
+    if (isDiscreteMode) {
+      setState(() {
+        _bufferedManualWinners = winners;
+        _drawMode = 'random';
+        _tabController.animateTo(0);
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Configuration AUTO appliquée avec succès', style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+          backgroundColor: AppTheme.successColor.withAlpha(200),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } else {
+      final min = int.tryParse(_minController.text) ?? 1;
+      final max = int.tryParse(_maxController.text) ?? 100;
+      context.read<DrawBloc>().add(PerformForcedDraw(winners: winners, min: min, max: max));
+    }
   }
 
   void _showError(String message) {
