@@ -61,7 +61,7 @@ class LuckyEliteApp extends StatelessWidget {
           }
 
           return MaterialApp(
-            title: 'Lucky Elite',
+            title: 'B-GLORY TIRAGE',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,

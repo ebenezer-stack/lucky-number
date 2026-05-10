@@ -143,12 +143,12 @@ class _HomeScreenContentState extends State<_HomeScreenContent> with TickerProvi
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'LUCKY ELITE',
+              'B-GLORY TIRAGE',
               style: GoogleFonts.outfit(
                 fontWeight: FontWeight.w900,
                 fontSize: 20,
                 letterSpacing: 3,
-                color: Colors.white,
+                color: AppTheme.goldColor,
               ),
             ),
             Text(

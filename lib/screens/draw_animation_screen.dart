@@ -33,7 +33,7 @@ class _DrawAnimationScreenState extends State<DrawAnimationScreen> with TickerPr
     "FLUX DE DONNÉES EN COURS...",
     "CALCUL DES PROBABILITÉS...",
     "EXTRACTION DES GAGNANTS...",
-    "DESTIN ÉLITE ACTIVÉ...",
+    "DESTIN GLORY ACTIVÉ...",
   ];
   int _currentTextIndex = 0;
 
@@ -293,7 +293,7 @@ class _DrawAnimationScreenState extends State<DrawAnimationScreen> with TickerPr
             const Icon(Icons.radar_rounded, color: AppTheme.goldColor, size: 45),
             const SizedBox(height: 12),
             Text(
-              'SCAN ELITE EN COURS',
+              'SCAN B-GLORY EN COURS',
               style: GoogleFonts.outfit(
                 fontSize: 22,
                 fontWeight: FontWeight.w900,

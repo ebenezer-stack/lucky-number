@@ -12,7 +12,7 @@ class ShareService {
     final dateFormatted = '${draw.date.day}/${draw.date.month}/${draw.date.year}';
     
     final message = '''
-🎲 Résultat du tirage - Lucky Numbers
+🎲 Résultat du tirage - B-GLORY TIRAGE
 
 🏆 Numéros gagnants: $numbersText
 
@@ -22,7 +22,7 @@ class ShareService {
 🔢 Plage: ${draw.minRange} - ${draw.maxRange}
 
 ---
-Généré avec Lucky Numbers 🎰
+Généré avec B-GLORY TIRAGE 🎰
 ''';  
 
     await SharePlus.instance.share(ShareParams(text: message));

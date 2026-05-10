@@ -29,7 +29,7 @@ class SettingsScreen extends StatelessWidget {
       flexibleSpace: FlexibleSpaceBar(
         titlePadding: const EdgeInsets.only(left: 24, bottom: 20),
         title: Text(
-          'PROFIL ELITE',
+          'B-GLORY PROFIL',
           style: GoogleFonts.outfit(
             fontWeight: FontWeight.w900,
             fontSize: 22,
@@ -81,7 +81,7 @@ class SettingsScreen extends StatelessWidget {
               const SizedBox(height: 16),
               _buildSettingCard(
                 context,
-                'SONS ELITE',
+                'SONS B-GLORY',
                 'Effets sonores immersifs',
                 Icons.volume_up_outlined,
                 settings.soundEnabled,
@@ -114,7 +114,7 @@ class SettingsScreen extends StatelessWidget {
               const SizedBox(height: 40),
               _buildSectionHeader('INFORMATIONS'),
               const SizedBox(height: 16),
-              _buildInfoCard(context, 'VERSION', '1.0.0 "ELITE EDITION"'),
+              _buildInfoCard(context, 'VERSION', '1.0.0 "B-GLORY EDITION"'),
               _buildInfoCard(context, 'ÉDITION', 'PREMIUM'),
               const SizedBox(height: 100),
             ]),

@@ -50,7 +50,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'ANALYSE ELITE',
+              'B-GLORY ANALYSE',
               style: GoogleFonts.outfit(
                 fontWeight: FontWeight.w900,
                 fontSize: 20,
@@ -156,7 +156,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           Container(width: 1, height: 40, color: Colors.white.withAlpha(10)),
           _buildMetricItem('PLUS SORTI', state.mostFrequent?.number.toString() ?? '-', Icons.trending_up_rounded),
           Container(width: 1, height: 40, color: Colors.white.withAlpha(10)),
-          _buildMetricItem('INDICE', 'ELITE', Icons.verified_outlined),
+          _buildMetricItem('INDICE', 'GLORY', Icons.verified_outlined),
         ],
       ),
     );
